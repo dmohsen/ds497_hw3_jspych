@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stroop Task Experiment</title>
+  <script src="https://unpkg.com/jspsych@7.3.4"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.2"></script>
+  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.4"></script>
+  <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet">
+</head>
+<body></body>
+<script>
+  const jsPsych = initJsPsych();
+
+  const colors = ["red", "blue", "green"];
+  const words = ["red", "blue", "green"];
+  let trials = [];
+  colors.forEach(color => {
+    words.forEach(word => {
+      for (let i = 0; i < 2; i++) {
+        trials.push({
+          word: word,
+          color: color,
+          correct_response: word === color ? 'MATCH' : 'NOT'
+        });
+      }
+    });
+  });
+  trials = jsPsych.randomization.shuffle(trials);
+
+  const instructions = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `<p>In this task, you will see color words displayed in different ink colors.</p>
+               <p>Your task is to indicate whether the word meaning and the ink color MATCH or NOT.</p>
+               <p>Press the 'MATCH' button if they match, and 'NOT' if they do not.</p>`,
+    choices: ["Start"]
+  };
+
+  const ready = {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: "<p>Press any key when ready for the next trial.</p>",
+    choices: "ALL_KEYS"
+  };
+
+  const stroop = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: function() {
+      const trial = jsPsych.timelineVariable('trial');
+      return `<p style="color:${trial.color}; font-size: 40px;">${trial.word}</p>`;
+    },
+    choices: ["MATCH", "NOT"],
+    on_finish: function(data) {
+      const trial = jsPsych.timelineVariable('trial');
+      data.word = trial.word;
+      data.color = trial.color;
+      data.correct_response = trial.correct_response;
+      data.correct = data.response === trial.correct_response;
+    }
+  };
+
+  const save_data = {
+    type: jsPsychPipe,
+    action: "save",
+    experiment_id: "your_experiment_id_here", // Replace with OSF experiment ID
+    filename: "stroop_data.csv",
+    data_string: () => jsPsych.data.get().csv(),
+    on_finish: () => console.log("Data saved to OSF")
+  };
+
+  const trial_timeline = {
+    timeline: [ready, stroop],
+    timeline_variables: trials.map(trial => ({ trial: trial }))
+  };
+
+  const timeline = [instructions, trial_timeline, save_data];
+
+  jsPsych.run(timeline);
+</script>
+</html>
