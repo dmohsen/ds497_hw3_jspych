@@ -42,7 +42,7 @@
     choices: "ALL_KEYS"
   };
 
-  const stroop = {
+ const stroop = {
     type: jsPsychHtmlButtonResponse,
     stimulus: function() {
       const trial = jsPsych.timelineVariable('trial');
@@ -51,12 +51,15 @@
     choices: ["MATCH", "NOT"],
     on_finish: function(data) {
       const trial = jsPsych.timelineVariable('trial');
+      const buttonLabel = ["MATCH", "NOT"][data.response];
+
       data.word = trial.word;
       data.color = trial.color;
       data.correct_response = trial.correct_response;
-      data.correct = data.response === trial.correct_response;
+      data.correct = (buttonLabel === trial.correct_response);
     }
   };
+
 
   const save_data = {
     type: jsPsychPipe,
